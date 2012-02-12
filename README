@@ -1,0 +1,23 @@
+ttyQR - draw QR codes straight into the terminal
+================================================
+
+Based on libqrencode library demo by Kentaro Fukuchi
+and Google Authenticator PAM module by Markus Gutschke
+
+INSTALATION
+===========
+
+1. Get the requied libqrencode (developed on version 3.1.1)
+   Be sure to install development packages. 
+2. Run make to compile ttyqr.
+3. (optional) copy ttyqr to your favourite binary path (prefferably /usr/local/bin)
+4. Enjoy.
+
+
+USAGE
+=====
+
+As simple as:
+$ ttyqr 'Hello World'
+
+For other usages, see the embedded help using ttyqr --help.
