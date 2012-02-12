@@ -41,7 +41,6 @@ static int casesensitive = 1;
 static int eightbit = 0;
 static int version = 0;
 static int size = 3;
-static int margin = 4;
 static int structured = 0;
 static QRecLevel level = QR_ECLEVEL_L;
 static QRencodeMode hint = QR_MODE_8;
@@ -53,7 +52,6 @@ static const struct option options[] = {
 	{"level"        , required_argument, NULL, 'l'},
 	{"size"         , required_argument, NULL, 's'},
 	{"symversion"   , required_argument, NULL, 'v'},
-	{"margin"       , required_argument, NULL, 'm'},
 	{"structured"   , no_argument      , NULL, 'S'},
 	{"kanji"        , no_argument      , NULL, 'k'},
 	{"casesensitive", no_argument      , NULL, 'c'},
@@ -64,7 +62,7 @@ static const struct option options[] = {
 	{NULL, 0, NULL, 0}
 };
 
-static char *optstring = "ho:l:s:v:m:Skci8Vb";
+static char *optstring = "ho:l:s:v:Skci8Vb";
 
 static void usage(int help, int longopt)
 {
@@ -91,8 +89,6 @@ static void usage(int help, int longopt)
 "               (default=L)\n\n"
 "  -v NUMBER, --symversion=NUMBER\n"
 "               specify the version of the symbol. (default=auto)\n\n"
-"  -m NUMBER, --margin=NUMBER\n"
-"               specify the width of margin. (default=4)\n\n"
 "  -S, --structured\n"
 "               make structured symbols. Version and output file must be specified.\n\n"
 "  -k, --kanji  assume that the input text contains kanji (shift-jis).\n\n"
@@ -121,7 +117,6 @@ static void usage(int help, int longopt)
 "  -l {LMQH}    specify error collectin level from L (lowest) to H (highest).\n"
 "               (default=L)\n"
 "  -v NUMBER    specify the version of the symbol. (default=auto)\n"
-"  -m NUMBER    specify the width of margin. (default=4)\n"
 "  -S           make structured symbols. Version and output file must be specified.\n"
 "  -k           assume that the input text contains kanji (shift-jis).\n"
 "  -c           encode lower-case alphabet characters in 8-bit mode. (default)\n"
@@ -422,13 +417,6 @@ int main(int argc, char **argv)
 						fprintf(stderr, "Invalid level: %s\n", optarg);
 						exit(EXIT_FAILURE);
 						break;
-				}
-				break;
-			case 'm':
-				margin = atoi(optarg);
-				if(margin < 0) {
-					fprintf(stderr, "Invalid margin: %d\n", margin);
-					exit(EXIT_FAILURE);
 				}
 				break;
 			case 'S':
