@@ -40,7 +40,6 @@
 static int casesensitive = 1;
 static int eightbit = 0;
 static int version = 0;
-static int size = 3;
 static int structured = 0;
 static QRecLevel level = QR_ECLEVEL_L;
 static QRencodeMode hint = QR_MODE_8;
@@ -50,7 +49,6 @@ static const struct option options[] = {
 	{"help"         , no_argument      , NULL, 'h'},
 	{"output"       , required_argument, NULL, 'o'},
 	{"level"        , required_argument, NULL, 'l'},
-	{"size"         , required_argument, NULL, 's'},
 	{"symversion"   , required_argument, NULL, 'v'},
 	{"structured"   , no_argument      , NULL, 'S'},
 	{"kanji"        , no_argument      , NULL, 'k'},
@@ -62,7 +60,7 @@ static const struct option options[] = {
 	{NULL, 0, NULL, 0}
 };
 
-static char *optstring = "ho:l:s:v:Skci8Vb";
+static char *optstring = "ho:l:v:Skci8Vb";
 
 static void usage(int help, int longopt)
 {
@@ -81,9 +79,7 @@ static void usage(int help, int longopt)
 "               will be output to standard output (default). If -S is given, structured\n"
 "               symbols are written to FILENAME-01.txt, FILENAME-02.txt, ...;\n"
 "               if specified, remove a trailing '.txt' from FILENAME.\n\n"
-"  -b, --block  Use unicode block elements for more compact codes.\n"
-"  -s NUMBER, --size=NUMBER\n"
-"               specify the size of dot (pixel). (default=3)\n\n"
+"  -b, --block  Use unicode block elements for more compact codes.\n\n"
 "  -l {LMQH}, --level={LMQH}\n"
 "               specify error collectin level from L (lowest) to H (highest).\n"
 "               (default=L)\n\n"
@@ -98,14 +94,14 @@ static void usage(int help, int longopt)
 "               ignore case distinctions and use only upper-case characters.\n\n"
 "  -8, -8bit    encode entire data in 8-bit mode. -k, -c and -i will be ignored.\n\n"
 "  -V, --version\n"
-"               display the version number and copyrights of the qrencode.\n\n"
+"               display the version number and copyrights of the ttyqr.\n\n"
 "  [STRING]     input data. If it is not specified, data will be taken from\n"
 "               standard input.\n"
 			);
 		} else {
 			fprintf(stderr,
 "Usage: ttyqr [OPTION]... [STRING]\n"
-"Encode input data in a QR Code and save as a PNG image.\n\n"
+"Encode input data in a QR Code and display it on terminal.\n\n"
 "  -h           display this message.\n"
 "  --help       display the usage of long options.\n"
 "  -o FILENAME  write PNG image to FILENAME. If '-' is specified, the result\n"
@@ -113,7 +109,6 @@ static void usage(int help, int longopt)
 "               symbols are written to FILENAME-01.txt, FILENAME-02.txt, ...;\n"
 "               if specified, remove a trailing '.txt' from FILENAME.\n"
 "  -b           Use unicode block elements for more compact codes.\n"
-"  -s NUMBER    specify the size of dot (pixel). (default=3)\n"
 "  -l {LMQH}    specify error collectin level from L (lowest) to H (highest).\n"
 "               (default=L)\n"
 "  -v NUMBER    specify the version of the symbol. (default=auto)\n"
@@ -122,7 +117,7 @@ static void usage(int help, int longopt)
 "  -c           encode lower-case alphabet characters in 8-bit mode. (default)\n"
 "  -i           ignore case distinctions and use only upper-case characters.\n"
 "  -8           encode entire data in 8-bit mode. -k, -c and -i will be ignored.\n"
-"  -V           display the version number and copyrights of the qrencode.\n"
+"  -V           display the version number and copyrights of the ttyqr.\n"
 "  [STRING]     input data. If it is not specified, data will be taken from\n"
 "               standard input.\n"
 			);
@@ -381,13 +376,6 @@ int main(int argc, char **argv)
 			case 'o':
 				outfile = optarg;
 				break;
-			case 's':
-				size = atoi(optarg);
-				if(size <= 0) {
-					fprintf(stderr, "Invalid size: %d\n", size);
-					exit(EXIT_FAILURE);
-				}
-				break;
 			case 'v':
 				version = atoi(optarg);
 				if(version < 0) {
@@ -441,7 +429,7 @@ int main(int argc, char **argv)
 				useBlockElements = 1;
 				break;
 			default:
-				fprintf(stderr, "Try `qrencode --help' for more information.\n");
+				fprintf(stderr, "Try `ttyqr --help' for more information.\n");
 				exit(EXIT_FAILURE);
 				break;
 		}
