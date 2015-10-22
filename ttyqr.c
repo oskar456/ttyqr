@@ -57,10 +57,11 @@ static const struct option options[] = {
 	{"8bit"         , no_argument      , NULL, '8'},
 	{"version"      , no_argument      , NULL, 'V'},
 	{"block"        , no_argument      , NULL, 'b'},
+	{"quadblock"    , no_argument      , NULL, 'B'},
 	{NULL, 0, NULL, 0}
 };
 
-static char *optstring = "ho:l:v:Skci8Vb";
+static char *optstring = "ho:l:v:Skci8VbB";
 
 static void usage(int help, int longopt)
 {
@@ -80,6 +81,7 @@ static void usage(int help, int longopt)
 "               symbols are written to FILENAME-01.txt, FILENAME-02.txt, ...;\n"
 "               if specified, remove a trailing '.txt' from FILENAME.\n\n"
 "  -b, --block  Use unicode block elements for more compact codes.\n\n"
+"  -B, --quadblock  Use 2x2 unicode block elements for even more compact codes.\n\n"
 "  -l {LMQH}, --level={LMQH}\n"
 "               specify error collectin level from L (lowest) to H (highest).\n"
 "               (default=L)\n\n"
@@ -109,6 +111,7 @@ static void usage(int help, int longopt)
 "               symbols are written to FILENAME-01.txt, FILENAME-02.txt, ...;\n"
 "               if specified, remove a trailing '.txt' from FILENAME.\n"
 "  -b           Use unicode block elements for more compact codes.\n"
+"  -B           Use 2x2 unicode block elements for even more compact codes.\n"
 "  -l {LMQH}    specify error collectin level from L (lowest) to H (highest).\n"
 "               (default=L)\n"
 "  -v NUMBER    specify the version of the symbol. (default=auto)\n"
@@ -170,6 +173,25 @@ static char *readStdin(void)
 #define UTF8_TOPHALF      "\xE2\x96\x80"
 #define UTF8_BOTTOMHALF   "\xE2\x96\x84"
 
+const char *UTF8_BLOCKCHARS[16] = {
+"\x20",
+"\xe2\x96\x98",
+"\xe2\x96\x9d",
+"\xe2\x96\x80",
+"\xe2\x96\x96",
+"\xe2\x96\x8c",
+"\xe2\x96\x9e",
+"\xe2\x96\x9b",
+"\xe2\x96\x97",
+"\xe2\x96\x9a",
+"\xe2\x96\x90",
+"\xe2\x96\x9c",
+"\xe2\x96\x84",
+"\xe2\x96\x99",
+"\xe2\x96\x9f",
+"\xe2\x96\x88"
+};
+
 static int writeTTY(QRcode *qrcode, const char *outfile) {
 	FILE *fp = stdout;
 	//
@@ -192,7 +214,7 @@ static int writeTTY(QRcode *qrcode, const char *outfile) {
 
 	char *ptr = (char *)qrcode->data;
 
-	if (!useBlockElements) {
+	if (useBlockElements == 0) {
 	  for (int i = 0; i < 2; ++i) {
 	    fprintf(fp, ANSI_BLACKONGREY);
 	    for (int x = 0; x < qrcode->width + 4; ++x) fprintf(fp, "  ");
@@ -225,7 +247,7 @@ static int writeTTY(QRcode *qrcode, const char *outfile) {
 	    for (int x = 0; x < qrcode->width + 4; ++x) fprintf(fp, "  ");
 	    fputs(ANSI_RESET, fp);
 	  }
-	} else {
+	} else if (useBlockElements == 1) {
 	  // Drawing the QRCode with Unicode block elements is desirable as
 	  // it makes the code much smaller, which is often easier to scan.
 	  // Unfortunately, many terminal emulators do not display these
@@ -261,6 +283,35 @@ static int writeTTY(QRcode *qrcode, const char *outfile) {
 	  }
 	  fprintf(fp, ANSI_BLACKONGREY);
 	  for (int i = 0; i < qrcode->width + 4; ++i) {
+	    fprintf(fp, " ");
+	  }
+	  fputs(ANSI_RESET, fp);
+        } else if (useBlockElements == 2) {
+          // Use 2x2 block elements
+	  fprintf(fp, ANSI_BLACKONGREY);
+	  for (int i = 0; i < (qrcode->width+1)/2 + 2; ++i) {
+	    fprintf(fp, " ");
+	  }
+	  fputs(ANSI_RESET, fp);
+	  for (int y = 0; y < qrcode->width; y += 2) {
+	    fprintf(fp, ANSI_BLACKONGREY" ");
+	    for (int x = 0; x < qrcode->width; x += 2) {
+	      int b = qrcode->data[y*qrcode->width + x] & 1;
+	      if (y+1 < qrcode->width) {
+	        b |= (qrcode->data[(y+1)*qrcode->width + x] & 1) << 2;
+                if (x+1 < qrcode->width) {
+                  b |= (qrcode->data[(y+1)*qrcode->width + x + 1] & 1) << 3;
+                }
+	      }
+	      if (x+1 < qrcode->width) {
+	        b |= (qrcode->data[y*qrcode->width + x + 1] & 1) << 1;
+	      }
+              fputs(UTF8_BLOCKCHARS[b], fp);
+	    }
+	    fputs(" "ANSI_RESET, fp);
+	  }
+	  fprintf(fp, ANSI_BLACKONGREY);
+	  for (int i = 0; i < (qrcode->width+1)/2 + 2; ++i) {
 	    fprintf(fp, " ");
 	  }
 	  fputs(ANSI_RESET, fp);
@@ -427,6 +478,9 @@ int main(int argc, char **argv)
 				break;
 			case 'b':
 				useBlockElements = 1;
+				break;
+			case 'B':
+				useBlockElements = 2;
 				break;
 			default:
 				fprintf(stderr, "Try `ttyqr --help' for more information.\n");
